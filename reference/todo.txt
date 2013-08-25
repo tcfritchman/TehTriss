@@ -1,0 +1,4 @@
+step 1: draw the board!
+make current tetromino object
+collision! 
+spawn new blocks
