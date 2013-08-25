@@ -1,4 +1,14 @@
-step 1: draw the board!
-make current tetromino object
+*step 1: draw the board!
+*make current tetromino object
 collision! 
-spawn new blocks
+*spawn new blocks
+collisions while rotating
+bidirectional rotation
+make all block objs
+spawn randomly
+create screen layout
+score system
+
+extras:
+pause menu
+start screen/menu
