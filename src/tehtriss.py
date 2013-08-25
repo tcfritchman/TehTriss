@@ -8,9 +8,9 @@ import pygame, sys, random, os, copy, math
 from pygame.locals import *
 
 # Game constants
-FIELDWIDTH = 12
-FIELDHEIGHT = 25
-LEFTEDGE = 0
+FIELDWIDTH = 11
+FIELDHEIGHT = 24
+LEFTEDGE = -1
 RIGHTEDGE = FIELDWIDTH - 1
 BOTTOMEDGE = FIELDHEIGHT - 1
 BLOCKSIZE = 16
@@ -62,6 +62,8 @@ def runGame():
     currentTetromino = T() # Tetromino in play
     fallDelay = 2
 
+    DISPLAYSURF.fill(BGCOLOR)
+
     while True: # main game loop -----------------------------------------------
         for iteration in xrange(FPS // fallDelay): # inner, full speed main loop
             for event in pygame.event.get(): # Event loop
@@ -80,7 +82,6 @@ def runGame():
                     if event.key == K_LEFT or event.key == K_RIGHT:
                         direction = None
     
-            DISPLAYSURF.fill(BGCOLOR)
 
             # copy old field into a new field var
             newField = copy.deepcopy(oldField)
@@ -111,17 +112,29 @@ def runGame():
             # update gameField to screen
             drawField(newField, oldField)
             pygame.display.flip()
+            oldField = copy.deepcopy(newField)
             FPSCLOCK.tick(FPS)
-            
-        # block falls incrementally
-        currentTetromino.moveDown()
-        # if tetromino collides with floot, time to make a new one
+
+        # if tetromino collides with floor, time to make a new one
+        # follows same screen update format as real-time loop
         if floorCollision(newField, currentTetromino):
+            newField = copy.deepcopy(oldField)
+            eraseTetrominoFromField(newField, currentTetromino)
             currentTetromino.moveUp()
             # TEST
             drawTetrominoToField(oldField, currentTetromino)
+            oldField = copy.deepcopy(newField)
             currentTetromino = T()
-                
+        else:
+            # block falls incrementally
+            newField = copy.deepcopy(oldField)
+            eraseTetrominoFromField(newField, currentTetromino)
+            currentTetromino.moveDown()
+            drawTetrominoToField(newField, currentTetromino)
+            drawField(newField, oldField)
+            pygame.display.flip()
+            oldField = copy.deepcopy(newField)
+
         DELAYCLOCK.tick(fallDelay)
     # --------------------------------------------------------------------------
 
