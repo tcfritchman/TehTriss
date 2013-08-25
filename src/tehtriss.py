@@ -8,9 +8,9 @@ import pygame, sys, random, os, copy, math
 from pygame.locals import *
 
 # Game constants
-FIELDWIDTH = 11
+FIELDWIDTH = 10
 FIELDHEIGHT = 24
-LEFTEDGE = -1
+LEFTEDGE = 0
 RIGHTEDGE = FIELDWIDTH - 1
 BOTTOMEDGE = FIELDHEIGHT - 1
 BLOCKSIZE = 16
@@ -89,14 +89,12 @@ def runGame():
     
             # real-time movement and control
             if direction == LEFT:
-                currentTetromino.moveLeft()
-                if wallCollision(newField, currentTetromino):
-                    currentTetromino.moveRight() # don't allow movement off screen
+                if not leftWallCollision(newField, currentTetromino) and not leftBlockCollision(newField, currentTetromino):
+                    currentTetromino.moveLeft()
                 direction = None
             elif direction == RIGHT:
-                currentTetromino.moveRight()
-                if wallCollision(newField, currentTetromino):
-                    currentTetromino.moveLeft() # don't allow movement off screen
+                if not rightWallCollision(newField, currentTetromino) and not rightBlockCollision(newField, currentTetromino):
+                    currentTetromino.moveRight()
                 direction = None
             elif direction == DOWN:
                 # FOR TESTING ONLY
@@ -117,18 +115,15 @@ def runGame():
 
         # if tetromino collides with floor, time to make a new one
         # follows same screen update format as real-time loop
-        if floorCollision(newField, currentTetromino):
-            newField = copy.deepcopy(oldField)
-            eraseTetrominoFromField(newField, currentTetromino)
-            currentTetromino.moveUp()
-            # TEST
-            drawTetrominoToField(oldField, currentTetromino)
+        newField = copy.deepcopy(oldField)
+        eraseTetrominoFromField(newField, currentTetromino)
+        if floorCollision(newField, currentTetromino) or verticalBlockCollision(newField, currentTetromino):
+            #currentTetromino.moveUp()
+            drawTetrominoToField(newField, currentTetromino)
             oldField = copy.deepcopy(newField)
             currentTetromino = T()
         else:
             # block falls incrementally
-            newField = copy.deepcopy(oldField)
-            eraseTetrominoFromField(newField, currentTetromino)
             currentTetromino.moveDown()
             drawTetrominoToField(newField, currentTetromino)
             drawField(newField, oldField)
@@ -136,6 +131,7 @@ def runGame():
             oldField = copy.deepcopy(newField)
 
         DELAYCLOCK.tick(fallDelay)
+
     # --------------------------------------------------------------------------
 
     
@@ -152,12 +148,13 @@ def createNewField():
 def drawField(newField, oldField):
     for x in range(FIELDWIDTH):
         for y in range(FIELDHEIGHT):
-            if newField[x][y] != oldField[x][y]:
-                # display only different blocks
-                blockX = x * BLOCKSIZE
-                blockY = y * BLOCKSIZE
-                blockRect = pygame.Rect(blockX, blockY, BLOCKSIZE, BLOCKSIZE)
-                drawBlock(newField[x][y], blockRect)
+            # TEST - COMMENTED OUT FOR TESTING PURPOSES ONLY TO PROVIDE ACCURATE PORTRAYAL OF PLAYING FIELD
+            #if newField[x][y] != oldField[x][y]:
+            # display only different blocks
+            blockX = x * BLOCKSIZE
+            blockY = y * BLOCKSIZE
+            blockRect = pygame.Rect(blockX, blockY, BLOCKSIZE, BLOCKSIZE)
+            drawBlock(newField[x][y], blockRect)
 
 # check each block for collisions
 # Types of collision:    Triggered by:
@@ -167,11 +164,19 @@ def drawField(newField, oldField):
 # 4. Vertical block      Down, Rotate
 
 # return True if block collides with either side of field
-def wallCollision(field, tetromino):
+def leftWallCollision(field, tetromino):
     for coord in range(len(tetromino.coords)):
         # Check to see if block is out of vertical bounds
         block = tetromino.coords[coord][X]
-        if block <= LEFTEDGE or block >= RIGHTEDGE:
+        if block <= LEFTEDGE:
+            return True
+    return False
+
+def rightWallCollision(field, tetromino):
+    for coord in range(len(tetromino.coords)):
+        # Check to see if block is out of vertical bounds
+        block = tetromino.coords[coord][X]
+        if block >= RIGHTEDGE:
             return True
     return False
 
@@ -182,7 +187,37 @@ def floorCollision(field, tetromino):
         if block >= BOTTOMEDGE:
             return True
     return False
-        
+
+def verticalBlockCollision(field, tetromino):
+    for coord in range(len(tetromino.coords)):
+        # Check to see if block is already occupied 
+        blockX = tetromino.coords[coord][X]
+        blockY = tetromino.coords[coord][Y]
+        if field[blockX][blockY + 1] != BLANK:
+            print blockX, ',', blockY
+            return True
+    return False
+
+def leftBlockCollision(field, tetromino):
+    for coord in range(len(tetromino.coords)):
+        # Check to see if block is already occupied 
+        blockX = tetromino.coords[coord][X]
+        blockY = tetromino.coords[coord][Y]
+        if field[blockX - 1][blockY] != BLANK:
+            print blockX, ',', blockY
+            return True
+    return False
+
+def rightBlockCollision(field, tetromino):
+    for coord in range(len(tetromino.coords)):
+        # Check to see if block is already occupied 
+        blockX = tetromino.coords[coord][X]
+        blockY = tetromino.coords[coord][Y]
+        if field[blockX + 1][blockY] != BLANK:
+            print blockX, ',', blockY
+            return True
+    return False
+
 # draw a block to the field
 def drawBlock(color, rect):
     if color == BLANK:
@@ -257,7 +292,6 @@ def rotateShape(shapeCoords, size, pos):
     negativePos[0] *= -1
     negativePos[1] *= -1
     offsetShape(shapeCoords, negativePos)
-    print shapeCoords
     for i in range(len(shapeCoords)):
         x = shapeCoords[i][X]
         shapeCoords[i][X] = shapeCoords[i][Y]
