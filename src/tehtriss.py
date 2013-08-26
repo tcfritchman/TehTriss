@@ -16,19 +16,20 @@ BOTTOMEDGE = FIELDHEIGHT - 1
 BLOCKSIZE = 16
 WINDOWWIDTH = 160
 WINDOWHEIGHT = 384
+SHAPES = 7
 FPS = 30
 BLANK = None
 
 # Color constants
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-CYAN = (0, 255, 255)
-YELLOW = (255, 255, 0)
-VIOLET =(192, 0, 255)
-ORANGE = (255, 128, 0)
+BLACK = Color(0, 0, 0)
+WHITE = Color(255, 255, 255)
+RED = Color(255, 0, 0)
+GREEN = Color(0, 255, 0)
+BLUE = Color(0, 0, 255)
+CYAN = Color(0, 255, 255)
+YELLOW = Color(255, 255, 0)
+VIOLET = Color(192, 0, 255)
+ORANGE = Color(255, 128, 0)
 
 X = 0
 Y = 1
@@ -59,7 +60,7 @@ def runGame():
     oldField = createNewField()
     direction = None # L, R keyboard movement
     rotate_direction = None # Tetromino rotation direction
-    currentTetromino = T() # Tetromino in play
+    currentTetromino = generateTetromino() # Tetromino in play
     fallDelay = 2
 
     DISPLAYSURF.fill(BGCOLOR)
@@ -100,9 +101,38 @@ def runGame():
                 # FOR TESTING ONLY
                 currentTetromino.moveDown()
                 direction = None
+            
+            # rotation logic including wall-kick
             if rotate_direction == CLOCKWISE:
-                currentTetromino.rotate()
+                '''
+                # first check for block collision
+                if not rightBlockCollision(newField, currentTetromino) and not leftBlockCollision(newField, currentTetromino):
+                    # check for wall collision
+                    if leftWallCollision(newField, currentTetromino):
+                        # attempt wall-kick
+                        currentTetromino.moveRight()
+                        currentTetromino.rotateCW()
+                        # check for any collision after wall kick
+                        if blockCollision(newField, currentTetromino):
+                            currentTetromino.rotateCCW()
+                            currentTetromino.moveLeft()
+                    elif rightWallCollision(newField, currentTetromino):
+                        # attemt wall-kick
+                        currentTetromino.moveLeft()
+                        currentTetromino.rotateCW()
+                        # check for any collision after wall kick
+                        if blockCollision(newField, currentTetromino):
+                            currentTetromino.rotateCCW()
+                            currentTetromino.moveRight()
+                    else:
+                        currentTetromino.rotateCW()
                 rotate_direction = None
+                '''                        
+                currentTetromino.rotateCW()
+                rotate_direction = None
+
+                        
+
             
             # update current tetromino to gameField 
             drawTetrominoToField(newField, currentTetromino)
@@ -121,7 +151,7 @@ def runGame():
             #currentTetromino.moveUp()
             drawTetrominoToField(newField, currentTetromino)
             oldField = copy.deepcopy(newField)
-            currentTetromino = T()
+            currentTetromino = generateTetromino()
         else:
             # block falls incrementally
             currentTetromino.moveDown()
@@ -218,6 +248,17 @@ def rightBlockCollision(field, tetromino):
             return True
     return False
 
+def blockCollision(field, tetromino):
+    for coord in range(len(tetromino.coords)):
+        # Check to see if block is already occupied 
+        blockX = tetromino.coords[coord][X]
+        blockY = tetromino.coords[coord][Y]
+        if field[blockX][blockY] != BLANK:
+            print blockX, ',', blockY
+            return True
+    return False
+
+
 # draw a block to the field
 def drawBlock(color, rect):
     if color == BLANK:
@@ -235,6 +276,24 @@ def drawTetrominoToField(field, tetromino):
     # change color for each coordinate in tetromino
     for i in range(len(tetromino.coords)):
         field[tetromino.coords[i][0]][tetromino.coords[i][1]] = tetromino.color
+        
+def generateTetromino():
+    n = random.randint(1, SHAPES)
+    if n == 1:
+        return I()
+    elif n == 2:
+        return J()
+    elif n == 3:
+        return L()
+    elif n == 4:
+        return O()
+    elif n == 5:
+        return S()
+    elif n == 6:
+        return T()
+    elif n == 7:
+        return Z()
+    
 
 # the size, color, position, and coordinates which describe a Tetromino
 class Tetromino(object):
@@ -265,8 +324,14 @@ class Tetromino(object):
     def moveRight(self):
         offsetShape(self.coords, [1, 0])
         self.pos[X] = self.pos[X] + 1
+
+    def rotateCW(self):
+        # Rotate CCW 3 times
+        for i in range(3):
+            rotateShape(self.coords, self.size, self.pos)
+
         
-    def rotate(self):
+    def rotateCCW(self):
         rotateShape(self.coords, self.size, self.pos)
 
 #         #  
@@ -280,6 +345,70 @@ class T(Tetromino):
         _startPos = [4, 0]
         offsetShape(_shapeCoords, _startPos) 
         super(T, self).__init__(3, VIOLET, _startPos, _shapeCoords)
+
+#      #
+#      # # #
+#
+class J(Tetromino):
+    def __init__(self):
+        _shapeCoords = [[0, 0], [0, 1], [1, 1], [2, 1]]
+        _startPos = [4, 0]
+        offsetShape(_shapeCoords, _startPos) 
+        super(J, self).__init__(3, BLUE, _startPos, _shapeCoords)
+
+#          #
+#      # # #
+#
+class L(Tetromino):
+    def __init__(self):
+        _shapeCoords = [[0, 1], [1, 1], [2, 0], [2, 1]]
+        _startPos = [4, 0]
+        offsetShape(_shapeCoords, _startPos) 
+        super(L, self).__init__(3, ORANGE, _startPos, _shapeCoords)
+
+#        # #
+#      # #  
+#
+class S(Tetromino):
+    def __init__(self):
+        _shapeCoords = [[0, 1], [1, 0], [1, 1], [2, 0]]
+        _startPos = [4, 0]
+        offsetShape(_shapeCoords, _startPos) 
+        super(S, self).__init__(3, GREEN, _startPos, _shapeCoords)
+
+#      # #  
+#        # #
+#
+class Z(Tetromino):
+    def __init__(self):
+        _shapeCoords = [[0, 0], [1, 0], [1, 1], [2, 1]]
+        _startPos = [4, 0]
+        offsetShape(_shapeCoords, _startPos) 
+        super(Z, self).__init__(3, RED, _startPos, _shapeCoords)
+
+#       # #  
+#       # #  
+class O(Tetromino):
+    def __init__(self):
+        _shapeCoords = [[0, 0], [1, 0], [0, 1], [1, 1]]
+        _startPos = [5, 0]
+        offsetShape(_shapeCoords, _startPos) 
+        super(O, self).__init__(2, YELLOW, _startPos, _shapeCoords)
+
+#
+#     # # # #
+#            
+#            
+class I(Tetromino):
+    def __init__(self):
+        _shapeCoords = [[0, 1], [1, 1], [2, 1], [3, 1]]
+        _startPos = [3, 0]
+        offsetShape(_shapeCoords, _startPos) 
+        super(I, self).__init__(4, CYAN, _startPos, _shapeCoords)
+        
+
+
+
 
 def offsetShape(shapeCoords, offset):        
     for i in range(len(shapeCoords)): # add start pos to shape's coordinates
