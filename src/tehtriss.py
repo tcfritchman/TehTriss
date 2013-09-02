@@ -61,7 +61,7 @@ def runGame():
     direction = None # L, R keyboard movement
     rotate_direction = None # Tetromino rotation direction
     currentTetromino = generateTetromino() # Tetromino in play
-    fallDelay = 2
+    fallDelay = 3
 
     DISPLAYSURF.fill(BGCOLOR)
 
@@ -277,6 +277,7 @@ def drawTetrominoToField(field, tetromino):
     for i in range(len(tetromino.coords)):
         field[tetromino.coords[i][0]][tetromino.coords[i][1]] = tetromino.color
         
+# returns a random tetromino object
 def generateTetromino():
     n = random.randint(1, SHAPES)
     if n == 1:

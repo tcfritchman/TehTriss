@@ -1,6 +1,10 @@
 *step 1: draw the board!
 *make current tetromino object
 collision! 
+	*R/L Wall collision
+	*floor collision
+	*R/L block collision
+	*vertical block collision
 *spawn new blocks
 collisions while rotating
 bidirectional rotation
